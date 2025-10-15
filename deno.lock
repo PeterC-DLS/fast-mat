@@ -1,5 +1,15 @@
 {
-  "version": "2",
+  "version": "5",
+  "specifiers": {
+    "npm:wabt@1.0.38": "1.0.38",
+    "npm:wabt@^1.0.38": "1.0.38"
+  },
+  "npm": {
+    "wabt@1.0.38": {
+      "integrity": "sha512-RdeuVjC/nwUmqYGd2S1K8fGmjJR8yTCVve735sdgMbB5ff548n7qxbEwSY92/GFL+lej64d9yNFnHvZBQ05RpQ==",
+      "bin": true
+    }
+  },
   "remote": {
     "https://deno.land/std@0.178.0/_util/asserts.ts": "178dfc49a464aee693a7e285567b3d0b555dc805ff490505a8aae34f9cfb1462",
     "https://deno.land/std@0.178.0/flags/mod.ts": "d1cdefa18472ef69858a17df5cf7c98445ed27ac10e1460183081303b0ebc270",
@@ -28,5 +38,10 @@
     "https://deno.land/std@0.74.0/path/posix.ts": "7c2539b5d9e22b47f02ccc5b6ef11e3975a5c60f49d2241271eaa5936e6082a0",
     "https://deno.land/std@0.74.0/path/separator.ts": "9dd15d46ff84a16e13554f56af7fee1f85f8d0f379efbbe60ac066a60561f036",
     "https://deno.land/std@0.74.0/path/win32.ts": "47114c941681ecbabab4ec355cb41d525fb5a14175cc47a5c76fdc5eaee2685a"
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:wabt@^1.0.38"
+    ]
   }
 }

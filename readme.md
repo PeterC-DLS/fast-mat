@@ -1,13 +1,14 @@
 # Fast Matix Math
 
 This is a bench-mark for observing the differences in various matrix-math
-implementations.
+implementations. WebGPU can be turned off in `use-webgpu.js`.
 
 `deno bench` run the bench mark
 
 These will all build to the `temp` directory. You need to run all of them for benches to
 successfully run.
 
+- `deno add npm:wabt` will add wat2wasm translator
 - `deno task build:wasm` will build the .wat files to wasm
 - `deno task gen:presized-funcs` will create source-code for hard-coded matrix ops
 - `deno task gen:rand-data` will generate random test data

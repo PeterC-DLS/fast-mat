@@ -1,9 +1,11 @@
 import strategyInfo from "../strategies.js";
 
+import useWebGPU from "./use-webgpu.js";
+
 const sizes = [32, 64, 128, 256, 512, 1024];
 const strategies = Object.entries(strategyInfo)
-  .filter(([k, v]) => !/unrolled/.test(k))
-  .map(([k, v]) => v);
+  .filter(([k, _v]) => !/unrolled/.test(k) && (useWebGPU || !/webgpu/.test(k)))
+  .map(([_k, v]) => v);
 
 function getExport(i) {
   if (typeof (i.export) === "function") {

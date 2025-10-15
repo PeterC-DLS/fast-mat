@@ -3,8 +3,8 @@
     "serve": "deno run --allow-net --allow-read https://deno.land/std@0.188.0/http/file_server.ts",
     "test": "deno test -A",
     "bench": "deno bench -A",
-    "bench:web": "deno run -A --unstable ./tools/web-bench.js -- web-bench",
-    "bench:webxl": "deno run -A --unstable ./tools/web-bench.js -- web-bench-xl",
+    "bench:web": "deno run -A --unstable-webgpu ./tools/web-bench.js -- web-bench",
+    "bench:webxl": "deno run -A --unstable-webgpu ./tools/web-bench.js -- web-bench-xl",
     "bench:json": "deno bench -A --json > ./temp/bench.json",
     "run:to-md": "deno run -A ./tools/json-bench-to-md.js",
     "run:to-csv": "deno run -A ./tools/json-bench-to-csv.js temp/bench.json",
@@ -17,9 +17,12 @@
     "gen:rand-data": "deno run -A ./tools/gen-random-data.js",
     "gen:web-bench": "deno run -A ./tools/gen-web-bench.js",
     "gen:web-bench-xl": "deno run -A ./tools/gen-web-bench-xl.js",
-    "build:wasm": "mkdir -p temp/wasm && wax wat2wasm -- wat/mat.wat -o temp/wasm/mat.wasm"
+    "build:wasm": "mkdir -p temp/wasm && wat2wasm wat/mat.wat -o temp/wasm/mat.wasm"
   },
   "fmt": {
     "lineWidth": 88
+  },
+  "imports": {
+    "wabt": "npm:wabt@^1.0.38"
   }
 }

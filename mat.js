@@ -74,6 +74,18 @@ export function addMatrixFlatColMajor(a, b) {
 }
 
 export function addMatrixFlatSimple(a, b) {
+  if (Array.isArray(a)) {
+    a = {
+      shape: [a.length],
+      data: a
+    };
+  }
+  if (Array.isArray(b)) {
+    b = {
+      shape: [b.length],
+      data: b
+    };
+  }
   const out = {
     shape: a.shape,
     data: new Array(a.data.length),

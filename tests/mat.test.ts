@@ -164,6 +164,7 @@ Deno.test("Adds 2x2", () => {
   assertEquals(flatToNestedArray(resultFlatPresize), mat2ResultNum);
   assertEquals(flatToNestedArray(resultFlatDynamic), mat2ResultNum);
   assertEquals(resultFlatF64.data, mat2ResultF64);
+  assertEquals(resultFlatF32.data, mat2ResultF32);
   assertEquals(resultFlatI32.data, mat2ResultI32);
 });
 

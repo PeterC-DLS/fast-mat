@@ -18,6 +18,9 @@ function serializeArray(array, constructor) {
         .join(", ")
     }]`;
   }
+  if (!Array.isArray(array)) {
+    array = array.data;
+  }
   return `new ${constructor.name}([${array.join(", ")}])`;
 }
 

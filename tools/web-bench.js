@@ -9,12 +9,16 @@ console.log(`Running with ${script}`);
 
 function getChromeExecutablePath() {
   //windows
-  return `C:/Program Files (x86)/Google/Chrome/Application/chrome.exe`;
+  // return `C:/Program Files (x86)/Google/Chrome/Application/chrome.exe`;
+  // return "/usr/bin/chromium-browser";
+  return "/usr/bin/firefox";
 }
 
 function launchChrome(url) {
   const command = new Deno.Command(getChromeExecutablePath(), {
     args: [
+      "-P",
+      "webdev", // whatever profile
       url,
     ],
   });

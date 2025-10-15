@@ -344,7 +344,7 @@ Deno.bench("Add 128x128 (unrolled dynamic)", { group: "128x128" }, () => {
 });
 
 Deno.bench("Add 256x256 (unrolled dynamic)", { group: "256x256" }, () => {
-  addMatrix128x128Dyn(mat128ANum, mat128BNum);
+  addMatrix256x256Dyn(mat256ANum, mat256BNum);
 });
 
 //Flat

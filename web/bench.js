@@ -31,7 +31,7 @@ export async function bench(name, options, benchFn) {
     results: [
       {
         ok: {
-          origin: window.location.href,
+          origin: globalThis.location.href,
           n: options.iterations,
           min: NaN, //min(runs),
           max: NaN, //max(runs),
