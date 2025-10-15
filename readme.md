@@ -1,10 +1,12 @@
 # Fast Matix Math
 
-This is a bench-mark for observing the differences in various matrix-math implementations.
+This is a bench-mark for observing the differences in various matrix-math
+implementations.
 
 `deno bench` run the bench mark
 
-These will all build to the `temp` directory.  You need to run all of them for benches to successfully run.
+These will all build to the `temp` directory. You need to run all of them for benches to
+successfully run.
 
 - `deno task build:wasm` will build the .wat files to wasm
 - `deno task gen:presized-funcs` will create source-code for hard-coded matrix ops
@@ -17,8 +19,10 @@ These will all build to the `temp` directory.  You need to run all of them for b
 - `deno task run:to-csv` will convert `temp/bench.json` to csv
 - `deno task run:to-csv` will convert `temp/web-bench.json` to csv
 - `deno task run:to-md` will convert `temp/bench.json` to markdown
-- `deno task run:poi` will filter `temp/bench.json` to a series of comparision points in both csv and md
-- `deno task run:web:poi` will filter `temp/web-bench.json` to a series of comparision points in both csv and md
+- `deno task run:poi` will filter `temp/bench.json` to a series of comparision points in
+  both csv and md
+- `deno task run:web:poi` will filter `temp/web-bench.json` to a series of comparision
+  points in both csv and md
 - `deno task test` will run tests
 
 Other functions are for outputing bench data in different formats
