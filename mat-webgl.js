@@ -9,7 +9,7 @@ context.getExtension("EXT_color_buffer_float");
 
 function createDataTexture(
   context,
-  data,
+  data = null,
   textureIndex = 0,
   width = 32,
   height = 32,
@@ -50,38 +50,14 @@ function createDataTexture(
     context.FLOAT,
     data,
   );
+  return texture;
 }
 
-function compileProgram(context) {
-  const vertexShaderText = `#version 300 es
-		precision highp float;
-		in vec3 aPosition;
-		in vec2 aUV;
-
-		out vec2 uv;
-
-		void main(){
-			gl_Position = vec4(aPosition, 1.0);
-			uv = aUV;
-		}
-	`;
+function compileProgram(context, vertexShaderText, fragmentShaderText) {
   const vertexShader = context.createShader(context.VERTEX_SHADER);
   context.shaderSource(vertexShader, vertexShaderText);
   context.compileShader(vertexShader);
 
-  const fragmentShaderText = `#version 300 es
-		precision highp float;
-		uniform sampler2D samplerA;
-		uniform sampler2D samplerB;
-
-		in vec2 uv;
-
-		out vec4 glColor;
-
-		void main(){
-			glColor = vec4(texture(samplerA, uv).r + texture(samplerB, uv).r, 0.0, 0.0, 1.0);
-		}
-	`;
   const fragmentShader = context.createShader(context.FRAGMENT_SHADER);
   context.shaderSource(fragmentShader, fragmentShaderText);
   context.compileShader(fragmentShader);
@@ -162,14 +138,14 @@ function createScene(context, program) {
     indicies,
     context.STATIC_DRAW,
   );
-
-  const samplerALocation = context.getUniformLocation(program, "samplerA");
-  const samplerBLocation = context.getUniformLocation(program, "samplerB");
-  context.uniform1i(samplerALocation, 0);
-  context.uniform1i(samplerBLocation, 1);
 }
 
-function createFramebuffer(context, width, height) {
+function addSampler(context, program, name, index) {
+  const samplerLocation = context.getUniformLocation(program, name);
+  context.uniform1i(samplerLocation, index);
+}
+
+function createFramebuffer(context, width, height, _n = 1) {
   const framebufferTexture = context.createTexture();
   context.bindTexture(context.TEXTURE_2D, framebufferTexture);
   context.texImage2D(
@@ -193,30 +169,59 @@ function createFramebuffer(context, width, height) {
     framebufferTexture,
     0,
   );
+  return framebuffer;
 }
 
-const program = compileProgram(context);
+const matrixAddVertexShaderText = `#version 300 es
+	precision highp float;
+	in vec3 aPosition;
+	in vec2 aUV;
+
+	out vec2 uv;
+
+	void main(){
+		gl_Position = vec4(aPosition, 1.0);
+		uv = aUV;
+	}
+`;
+
+const matrixAddFragmentShaderText = `#version 300 es
+	precision highp float;
+	uniform sampler2D samplerA;
+	uniform sampler2D samplerB;
+
+	in vec2 uv;
+
+	layout (location=0) out vec4 glColor;
+	layout (location=1) out vec4 glColor2;
+
+	void main(){
+		glColor = vec4(texture(samplerA, uv).r + texture(samplerB, uv).r, 0.0, 0.0, 1.0);
+	}
+`;
+
+const program = compileProgram(
+  context,
+  matrixAddVertexShaderText,
+  matrixAddFragmentShaderText,
+);
 createScene(context, program);
-createFramebuffer(context, canvas.width, canvas.height);
+addSampler(context, program, "samplerA", 0);
+addSampler(context, program, "samplerB", 1);
+createFramebuffer(context, canvas.width, canvas.height, 2);
 
 export function addMatrixWebGl(a, b) {
-  context.viewport(0, 0, a.shape[0], a.shape[1]);
-  createDataTexture(context, a.data, 0, a.shape[0], b.shape[1]);
-  createDataTexture(context, b.data, 1, b.shape[0], b.shape[1]);
-  canvas.width = a.shape[0];
-  canvas.height = a.shape[1];
+  const h = a.shape[0];
+  const w = a.shape[1];
+  context.viewport(0, 0, w, h);
+  createDataTexture(context, a.data, 0, w, h);
+  createDataTexture(context, b.data, 1, w, h);
+  canvas.width = w;
+  canvas.height = h;
   context.drawElements(context.TRIANGLES, 6, context.UNSIGNED_SHORT, 0);
 
-  const result = new Float32Array(a.shape[0] * a.shape[1]);
-  context.readPixels(
-    0,
-    0,
-    a.shape[0],
-    a.shape[1],
-    context.RED,
-    context.FLOAT,
-    result,
-  );
+  const result = new Float32Array(w * h);
+  context.readPixels(0, 0, w, h, context.RED, context.FLOAT, result);
 
   return {
     shape: a.shape,

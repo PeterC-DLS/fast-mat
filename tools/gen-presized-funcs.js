@@ -13,12 +13,15 @@ function genMatAddFlatFunctionString(rows, cols) {
   }\n}`;
 }
 
+const lastShape = [sizes.at(-1), sizes.at(-1) / 2];
+
 function genStaticMatAddFunctions(sizes, functionGenerator) {
   let out = ""; //lol string buffer
 
   for (const size of sizes) {
     out += functionGenerator(size, size) + "\n\n";
   }
+  out += functionGenerator(lastShape[0], lastShape[1]) + "\n\n";
 
   return out;
 }
@@ -30,7 +33,10 @@ ${
     sizes.map((size) =>
       `export const addMatrix${size}x${size}Dyn = genMatAddFunc(${size},${size});`
     ).join(";\n")
-  }`;
+  }
+export const addMatrix${lastShape[0]}x${lastShape[1]}Dyn = genMatAddFunc(${
+    lastShape[0]
+  },${lastShape[1]});`;
 }
 
 function writeFile(type, content) {

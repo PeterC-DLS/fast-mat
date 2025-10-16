@@ -24,25 +24,48 @@ function serializeArray(array, constructor) {
   return `new ${constructor.name}([${array.join(", ")}])`;
 }
 
+function getPrefix(rows, cols) {
+  return cols === rows ? `mat${rows}` : `matRect${rows}`; // rectangular (non-square) matrices
+}
+
+function generateSizedData(
+  type,
+  sampler,
+  constructor,
+  isFlat,
+  size,
+  cols,
+) {
+  const prefix = `export const ${getPrefix(size, cols)}`;
+
+  const a = isFlat ? getMatFlat(size, cols, sampler) : getMat(size, cols, sampler);
+  const b = isFlat ? getMatFlat(size, cols, sampler) : getMat(size, cols, sampler);
+  const r = isFlat ? addMatrixFlatSimple(a, b, constructor) : addMatrixFunc(a, b);
+
+  return `${prefix}A${toTitleCase(type)} = ${serializeArray(a, constructor)};
+${prefix}B${toTitleCase(type)} = ${serializeArray(b, constructor)};
+${prefix}Result${toTitleCase(type)} = ${serializeArray(r, constructor)}
+
+`;
+}
+
 function writeTestFile(type, sampler, constructor, isFlat = false) {
   let out = ""; //lol string buffer
   const sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256];
 
   for (const size of sizes) {
-    const a = isFlat ? getMatFlat(size, size, sampler) : getMat(size, size, sampler);
-    const b = isFlat ? getMatFlat(size, size, sampler) : getMat(size, size, sampler);
-    const r = isFlat ? addMatrixFlatSimple(a, b, constructor) : addMatrixFunc(a, b);
-
-    out += `export const mat${size}A${toTitleCase(type)} = ${
-      serializeArray(a, constructor)
-    };\n`;
-    out += `export const mat${size}B${toTitleCase(type)} = ${
-      serializeArray(b, constructor)
-    };\n`;
-    out += `export const mat${size}Result${toTitleCase(type)} = ${
-      serializeArray(r, constructor)
-    }\n\n`;
+    out += generateSizedData(type, sampler, constructor, isFlat, size, size);
   }
+
+  const lastShape = [sizes.at(-1), sizes.at(-1) / 2];
+  out += generateSizedData(
+    type,
+    sampler,
+    constructor,
+    isFlat,
+    lastShape[0],
+    lastShape[1],
+  );
 
   Deno.writeTextFileSync(`./temp/data/mat-data-${type.toLowerCase()}.js`, out);
 }

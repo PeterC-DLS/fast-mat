@@ -13,7 +13,10 @@ import {
 
 function assertMat(a, b) {
   for (const i in a) {
-    if (a[i] !== b[i]) throw new Error("assertion failed. Arrays not equal");
+    if (a[i] !== b[i]) {
+      console.error("Failed", a, b);
+      throw new Error("assertion failed. Arrays not equal");
+    }
   }
   console.log(`Passed!`, a, b);
 }

@@ -77,13 +77,13 @@ export function addMatrixFlatSimple(a, b) {
   if (Array.isArray(a)) {
     a = {
       shape: [a.length],
-      data: a
+      data: a,
     };
   }
   if (Array.isArray(b)) {
     b = {
       shape: [b.length],
-      data: b
+      data: b,
     };
   }
   const out = {

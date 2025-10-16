@@ -35,15 +35,21 @@ function getImportFuncs() {
   return importList + "\n";
 }
 
-function getArgument(name, size, typeSuffix) {
-  const arg = `mat${size}${name}${typeSuffix}`;
+function getPrefix(rows, cols) {
+  return cols === rows ? `mat${rows}` : `matRect${rows}`; // rectangular (non-square) matrices
+}
+
+function getArgument(name, size, cols, typeSuffix) {
+  const prefix = getPrefix(size, cols);
+
+  const arg = `${prefix}${name}${typeSuffix}`;
   if (["F64", "F32", "I32"].includes(typeSuffix)) {
-    return `{ shape: [${size}, ${size}], data: ${arg} }`;
+    return `{ shape: [${size}, ${cols}], data: ${arg} }`;
   }
   return arg;
 }
 
-function callFunction(strat, size) {
+function callFunction(strat, size, cols) {
   let typeSuffix;
   switch (strat.inputType) {
     case "flatNum": {
@@ -69,12 +75,12 @@ function callFunction(strat, size) {
   }
 
   if (typeof (strat.export) === "function") {
-    return `await ${strat.export(size)}(${getArgument("A", size, typeSuffix)}, ${
-      getArgument("B", size, typeSuffix)
+    return `await ${strat.export(size)}(${getArgument("A", size, cols, typeSuffix)}, ${
+      getArgument("B", size, cols, typeSuffix)
     })`;
   }
-  return `await ${strat.export}(${getArgument("A", size, typeSuffix)}, ${
-    getArgument("B", size, typeSuffix)
+  return `await ${strat.export}(${getArgument("A", size, cols, typeSuffix)}, ${
+    getArgument("B", size, cols, typeSuffix)
   })`;
 }
 
@@ -84,28 +90,26 @@ let testFile = "";
 testFile +=
   `import { getMat, getMatFlat, normalSampler, normalIntSampler } from "../../utils/random-util.js";\n`;
 
-for (const size of sizes) {
-  testFile +=
-    `const mat${size}ANum = getMat(${size}, ${size}, normalSampler(0, 1e9));\n`;
-  testFile +=
-    `const mat${size}BNum = getMat(${size}, ${size}, normalSampler(0, 1e9));\n`;
-  testFile +=
-    `const mat${size}AFlat = { shape: [${size},${size}], data: getMatFlat(${size}, ${size}, normalSampler(0, 1e9)) };\n`;
-  testFile +=
-    `const mat${size}BFlat = { shape: [${size},${size}], data: getMatFlat(${size}, ${size}, normalSampler(0, 1e9)) };\n`;
-  testFile +=
-    `const mat${size}AI32 = new Int32Array(getMatFlat(${size}, ${size},  normalIntSampler(0, Number.MIN_SAFE_INTEGER / 6)));\n`;
-  testFile +=
-    `const mat${size}BI32 = new Int32Array(getMatFlat(${size}, ${size},  normalIntSampler(0, Number.MIN_SAFE_INTEGER / 6)));\n`;
-  testFile +=
-    `const mat${size}AF32 = new Float32Array(getMatFlat(${size}, ${size},  normalSampler(0, 1e4)));\n`;
-  testFile +=
-    `const mat${size}BF32 = new Float32Array(getMatFlat(${size}, ${size}, normalSampler(0, 1e4)));\n`;
-  testFile +=
-    `const mat${size}AF64 = new Float64Array(getMatFlat(${size}, ${size}, normalSampler(0, 1e9)));\n`;
-  testFile +=
-    `const mat${size}BF64 = new Float64Array(getMatFlat(${size}, ${size}, normalSampler(0, 1e9)));\n`;
+function generateSizedData(rows, cols) {
+  const prefix = `const ${getPrefix(rows, cols)}`;
+
+  return `${prefix}ANum = getMat(${rows}, ${cols}, normalSampler(0, 1e9));
+${prefix}BNum = getMat(${rows}, ${cols}, normalSampler(0, 1e9));
+${prefix}AFlat = { shape: [${rows}, ${cols}], data: getMatFlat(${rows}, ${cols}, normalSampler(0, 1e9)) };
+${prefix}BFlat = { shape: [${rows}, ${cols}], data: getMatFlat(${rows}, ${cols}, normalSampler(0, 1e9)) };
+${prefix}AI32 = new Int32Array(getMatFlat(${rows}, ${cols}, normalIntSampler(0, Number.MIN_SAFE_INTEGER / 6)));
+${prefix}BI32 = new Int32Array(getMatFlat(${rows}, ${cols}, normalIntSampler(0, Number.MIN_SAFE_INTEGER / 6)));
+${prefix}AF32 = new Float32Array(getMatFlat(${rows}, ${cols}, normalSampler(0, 1e4)));
+${prefix}BF32 = new Float32Array(getMatFlat(${rows}, ${cols}, normalSampler(0, 1e4)));
+${prefix}AF64 = new Float64Array(getMatFlat(${rows}, ${cols}, normalSampler(0, 1e9)));
+${prefix}BF64 = new Float64Array(getMatFlat(${rows}, ${cols}, normalSampler(0, 1e9)));
+`;
 }
+for (const size of sizes) {
+  testFile += generateSizedData(size, size);
+}
+const lastShape = [sizes.at(-1), sizes.at(-1) / 2];
+testFile += generateSizedData(lastShape[0], lastShape[1]);
 
 //strats
 
@@ -121,14 +125,22 @@ testFile += `document.body.innerHTML = "Running...";\n\n`;
 
 //tests
 
+function addRunLines(strat, rows, cols) {
+  let runLines =
+    `runs.push(await bench("Add ${rows}x${cols} (${strat.name})", { group: "${rows}x${cols}" }, async () => {`;
+  runLines += callFunction(strat, rows, cols);
+  runLines += `}));\n\n`;
+
+  return runLines;
+}
+
 for (const strat of strategies) {
   testFile += `await tick();\n`;
   for (const size of sizes) {
-    testFile +=
-      `runs.push(await bench("Add ${size}x${size} (${strat.name})", { group: "${size}x${size}" }, async () => {`;
-    testFile += callFunction(strat, size);
-    testFile += `}));\n\n`;
+    testFile += addRunLines(strat, size, size);
   }
+
+  testFile += addRunLines(strat, lastShape[0], lastShape[1]);
 }
 
 testFile += `await fetch(".", {

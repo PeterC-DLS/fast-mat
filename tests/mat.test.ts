@@ -13,11 +13,13 @@ import {
 import {
   addMatrix128x128Nested,
   addMatrix1x1Nested,
+  addMatrix256x128Nested,
   addMatrix2x2Nested,
 } from "../temp/presized/mat-presized-nested.js";
 import {
   addMatrix128x128Flat,
   addMatrix1x1Flat,
+  addMatrix256x128Flat,
   addMatrix2x2Flat,
 } from "../temp/presized/mat-presized-flat.js";
 import {
@@ -33,6 +35,9 @@ import {
   mat4AF64,
   mat4BF64,
   mat4ResultF64,
+  matRect256AF64,
+  matRect256BF64,
+  matRect256ResultF64,
 } from "../temp/data/mat-data-f64.js";
 import {
   mat128ANum,
@@ -47,6 +52,9 @@ import {
   mat4ANum,
   mat4BNum,
   mat4ResultNum,
+  matRect256ANum,
+  matRect256BNum,
+  matRect256ResultNum,
 } from "../temp/data/mat-data-num.js";
 import {
   mat128AF32,
@@ -61,6 +69,9 @@ import {
   mat4AF32,
   mat4BF32,
   mat4ResultF32,
+  matRect256AF32,
+  matRect256BF32,
+  matRect256ResultF32,
 } from "../temp/data/mat-data-f32.js";
 import {
   mat128AI32,
@@ -75,6 +86,9 @@ import {
   mat4AI32,
   mat4BI32,
   mat4ResultI32,
+  matRect256AI32,
+  matRect256BI32,
+  matRect256ResultI32,
 } from "../temp/data/mat-data-i32.js";
 import { genMatAddFlatFunc, genMatAddFunc } from "../mat-dynamic.js";
 
@@ -231,4 +245,51 @@ Deno.test("Adds 100x100", () => {
   assertEquals(resultF64.data, mat128ResultF64);
   assertEquals(resultF32.data, mat128ResultF32);
   assertEquals(resultI32.data, mat128ResultI32);
+});
+
+Deno.test("Adds non-square", () => {
+  const resultFunc = addMatrixFunc(matRect256ANum, matRect256BNum);
+  const resultLoop = addMatrixLoop(matRect256ANum, matRect256BNum);
+  const resultLoopPreAlloc = addMatrixLoopPrealloc(
+    matRect256ANum,
+    matRect256BNum,
+  );
+  const resultPresize = addMatrix256x128Nested(matRect256ANum, matRect256BNum);
+  const resultDynamic = genMatAddFunc(256, 128)(matRect256ANum, matRect256BNum);
+  const resultFlat = addMatrixFlat(
+    nestedArrayToFlat(matRect256ANum),
+    nestedArrayToFlat(matRect256BNum),
+  );
+  const resultFlatPresize = addMatrix256x128Flat(
+    nestedArrayToFlat(matRect256ANum),
+    nestedArrayToFlat(matRect256BNum),
+  );
+  const resultFlatDynamic = genMatAddFlatFunc(256, 128)(
+    nestedArrayToFlat(matRect256ANum),
+    nestedArrayToFlat(matRect256BNum),
+  );
+  const resultF64 = addMatrixFloat64({
+    shape: [256, 128],
+    data: matRect256AF64,
+  }, { shape: [256, 128], data: matRect256BF64 });
+  const resultF32 = addMatrixFloat32({
+    shape: [256, 128],
+    data: matRect256AF32,
+  }, { shape: [256, 128], data: matRect256BF32 });
+  const resultI32 = addMatrixInt32(
+    { shape: [256, 128], data: matRect256AI32 },
+    { shape: [256, 128], data: matRect256BI32 },
+  );
+
+  assertEquals(resultFunc, matRect256ResultNum);
+  assertEquals(resultLoop, matRect256ResultNum);
+  assertEquals(resultLoopPreAlloc, matRect256ResultNum);
+  assertEquals(resultPresize, matRect256ResultNum);
+  assertEquals(resultDynamic, matRect256ResultNum);
+  assertEquals(flatToNestedArray(resultFlat), matRect256ResultNum);
+  assertEquals(flatToNestedArray(resultFlatPresize), matRect256ResultNum);
+  assertEquals(flatToNestedArray(resultFlatDynamic), matRect256ResultNum);
+  assertEquals(resultF64.data, matRect256ResultF64);
+  assertEquals(resultF32.data, matRect256ResultF32);
+  assertEquals(resultI32.data, matRect256ResultI32);
 });
