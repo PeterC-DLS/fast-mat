@@ -50,6 +50,7 @@ function createDataTexture(
     context.FLOAT,
     data,
   );
+
   return texture;
 }
 
@@ -101,29 +102,11 @@ function createScene(context, program) {
   context.bindBuffer(context.ARRAY_BUFFER, positionBuffer);
   context.bufferData(context.ARRAY_BUFFER, positions, context.STATIC_DRAW);
 
-  const positionLocation = context.getAttribLocation(program, "aPosition");
+  const positionLocation = context.getAttribLocation(program, "position");
   context.enableVertexAttribArray(positionLocation);
   context.vertexAttribPointer(positionLocation, 2, context.FLOAT, false, 0, 0);
 
-  const uvs = new Float32Array([
-    0.0,
-    0.0,
-    1.0,
-    0.0,
-    1.0,
-    1.0,
-    0.0,
-    1.0,
-  ]);
-  const uvBuffer = context.createBuffer();
-  context.bindBuffer(context.ARRAY_BUFFER, uvBuffer);
-  context.bufferData(context.ARRAY_BUFFER, uvs, context.STATIC_DRAW);
-
-  const texCoordLocation = context.getAttribLocation(program, "aUV");
-  context.enableVertexAttribArray(texCoordLocation);
-  context.vertexAttribPointer(texCoordLocation, 2, context.FLOAT, false, 0, 0);
-
-  const indicies = new Uint16Array([
+  const indices = new Uint16Array([
     0,
     1,
     2,
@@ -135,7 +118,7 @@ function createScene(context, program) {
   context.bindBuffer(context.ELEMENT_ARRAY_BUFFER, indexBuffer);
   context.bufferData(
     context.ELEMENT_ARRAY_BUFFER,
-    indicies,
+    indices,
     context.STATIC_DRAW,
   );
 }
@@ -145,58 +128,51 @@ function addSampler(context, program, name, index) {
   context.uniform1i(samplerLocation, index);
 }
 
-function createFramebuffer(context, width, height, _n = 1) {
-  const framebufferTexture = context.createTexture();
-  context.bindTexture(context.TEXTURE_2D, framebufferTexture);
-  context.texImage2D(
-    context.TEXTURE_2D,
-    0,
-    context.R32F,
-    width,
-    height,
-    0,
-    context.RED,
-    context.FLOAT,
-    null,
-  );
-
+function createFramebuffer(context, width, height, n = 1, offset = 0) {
   const framebuffer = context.createFramebuffer();
   context.bindFramebuffer(context.FRAMEBUFFER, framebuffer);
-  context.framebufferTexture2D(
-    context.FRAMEBUFFER,
-    context.COLOR_ATTACHMENT0,
-    context.TEXTURE_2D,
-    framebufferTexture,
-    0,
-  );
+  const attachments = [];
+  for (let i = 0; i < n; i++) {
+    const framebufferTexture = createDataTexture(context, null, 0, width, height);
+    const attachment = context.COLOR_ATTACHMENT0 + i + offset;
+    attachments.push(attachment);
+    context.framebufferTexture2D(
+      context.FRAMEBUFFER,
+      attachment,
+      context.TEXTURE_2D,
+      framebufferTexture,
+      0,
+    );
+  }
+
+  if (n > 1) {
+    context.drawBuffers(attachments);
+  }
   return framebuffer;
 }
 
 const matrixAddVertexShaderText = `#version 300 es
 	precision highp float;
-	in vec3 aPosition;
-	in vec2 aUV;
+	in vec4 position;
 
-	out vec2 uv;
-
-	void main(){
-		gl_Position = vec4(aPosition, 1.0);
-		uv = aUV;
+	void main() {
+		gl_Position = position;
 	}
 `;
+
+const nAttachments = 1; // if change this, then add new locations to fragment shader
 
 const matrixAddFragmentShaderText = `#version 300 es
 	precision highp float;
 	uniform sampler2D samplerA;
 	uniform sampler2D samplerB;
 
-	in vec2 uv;
+	layout (location=0) out vec4 glColor0;
+	// layout (location=1) out vec4 glColor1; // for attachment 1
 
-	layout (location=0) out vec4 glColor;
-	layout (location=1) out vec4 glColor2;
-
-	void main(){
-		glColor = vec4(texture(samplerA, uv).r + texture(samplerB, uv).r, 0.0, 0.0, 1.0);
+	void main() {
+		ivec2 xy = ivec2(gl_FragCoord.xy);
+		glColor0 = vec4(texelFetch(samplerA, xy, 0).r + texelFetch(samplerB, xy, 0).r, 0.0, 0.0, 1.0);
 	}
 `;
 
@@ -208,7 +184,7 @@ const program = compileProgram(
 createScene(context, program);
 addSampler(context, program, "samplerA", 0);
 addSampler(context, program, "samplerB", 1);
-createFramebuffer(context, canvas.width, canvas.height, 2);
+createFramebuffer(context, canvas.width, canvas.height, nAttachments);
 
 export function addMatrixWebGl(a, b) {
   const h = a.shape[0];
@@ -220,6 +196,8 @@ export function addMatrixWebGl(a, b) {
   canvas.height = h;
   context.drawElements(context.TRIANGLES, 6, context.UNSIGNED_SHORT, 0);
 
+  const attachment = 0; // up to nAttachments-1
+  context.readBuffer(context.COLOR_ATTACHMENT0 + attachment);
   const result = new Float32Array(w * h);
   context.readPixels(0, 0, w, h, context.RED, context.FLOAT, result);
 

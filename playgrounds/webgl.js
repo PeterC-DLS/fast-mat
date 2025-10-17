@@ -12,11 +12,20 @@ import {
 } from "../temp/data/mat-data-f32.js";
 
 function assertMat(a, b) {
+  const fails = [];
   for (const i in a) {
     if (a[i] !== b[i]) {
-      console.error("Failed", a, b);
-      throw new Error("assertion failed. Arrays not equal");
+      fails.push(i);
+      if (fails.length > 20) {
+        break;
+      }
     }
+  }
+
+  if (fails.length) {
+    console.error("Fails at", fails);
+    fails.forEach((i) => console.log(a[i], "!=", b[i]));
+    throw new Error("assertion failed. Arrays not equal");
   }
   console.log(`Passed!`, a, b);
 }
