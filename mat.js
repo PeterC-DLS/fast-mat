@@ -197,21 +197,30 @@ const { instance: matInstance } = await WebAssembly.instantiate(wasm, {
   // }
 });
 
-export function addMatrixWasmF64(a, b) {
-  const lhsElementOffset = 0;
-  const rhsElementOffset = lhsElementOffset + a.data.length;
-  const rhsByteOffset = rhsElementOffset * 8;
-  const resultElementOffset = lhsElementOffset + a.data.length + b.data.length;
-  const resultByteOffset = resultElementOffset * 8;
-  const elementLength = a.data.length;
+const allowMemoryGrowth = true;
+const bytesPerPage = 64 * 1024; // page = 64kiB
 
-  // //grow memory if needed
-  // const spaceLeftover = matInstance.exports.memory.buffer.byteLength - (a.data.length * 3 * 8)
-  // if (spaceLeftover < 0){
-  // 	const pagesNeeded = Math.ceil((a.data.length * 3 * 8) / (64 * 1024));
-  // 	const pagesHave = matInstance.exports.memory.buffer.byteLength / (64 * 1024);
-  // 	matInstance.exports.memory.grow(pagesNeeded - pagesHave);
-  // }
+function growMemory(items) {
+  const spaceNeeded = items * 3 * 8; // assume there's three arrays with items that are 64bits wide
+  if (matInstance.exports.memory.buffer.byteLength < spaceNeeded) {
+    const pagesNeeded = Math.ceil(spaceNeeded / bytesPerPage);
+    const pagesHave = matInstance.exports.memory.buffer.byteLength / bytesPerPage;
+    console.log("Growing memory from %i by %i (pages=64kiB)", pagesHave, pagesNeeded);
+    matInstance.exports.memory.grow(pagesNeeded - pagesHave);
+  }
+}
+
+export function addMatrixWasmF64(a, b) {
+  const elementLength = a.data.length;
+  const lhsElementOffset = 0;
+  const rhsElementOffset = lhsElementOffset + elementLength;
+  const rhsByteOffset = rhsElementOffset * 8;
+  const resultElementOffset = lhsElementOffset + elementLength + b.data.length;
+  const resultByteOffset = resultElementOffset * 8;
+
+  if (allowMemoryGrowth) {
+    growMemory(elementLength);
+  }
 
   const f64View = new Float64Array(matInstance.exports.memory.buffer);
   f64View.set(a.data, lhsElementOffset);
@@ -234,20 +243,20 @@ export function addMatrixWasmF64(a, b) {
 }
 
 export function addMatrixWasmSimdF64(a, b) {
-  const lhsElementOffset = 0;
-  const rhsElementOffset = lhsElementOffset + a.data.length;
-  const rhsByteOffset = rhsElementOffset * 8;
-  const resultElementOffset = lhsElementOffset + a.data.length + b.data.length;
-  const resultByteOffset = resultElementOffset * 8;
   const elementLength = a.data.length;
+  const lhsElementOffset = 0;
+  const rhsElementOffset = lhsElementOffset + elementLength;
+  const rhsByteOffset = rhsElementOffset * 8;
+  const resultElementOffset = lhsElementOffset + elementLength + b.data.length;
+  const resultByteOffset = resultElementOffset * 8;
 
-  //grow memory if needed
-  // const spaceLeftover = matInstance.exports.memory.buffer.byteLength - (a.data.length * 3 * 8)
-  // if (spaceLeftover < 0){
-  // 	const pagesNeeded = Math.ceil((a.data.length * 3 * 8) / (64 * 1024));
-  // 	const pagesHave = matInstance.exports.memory.buffer.byteLength / (64 * 1024);
-  // 	matInstance.exports.memory.grow(pagesNeeded - pagesHave);
-  // }
+  if (allowMemoryGrowth) {
+    growMemory(elementLength);
+  }
+
+  if (allowMemoryGrowth) {
+    growMemory(a.data.length);
+  }
 
   const f64View = new Float64Array(matInstance.exports.memory.buffer);
   f64View.set(a.data, lhsElementOffset);
@@ -270,20 +279,16 @@ export function addMatrixWasmSimdF64(a, b) {
 }
 
 export function addMatrixWasmSimdF32(a, b) {
-  const lhsElementOffset = 0;
-  const rhsElementOffset = lhsElementOffset + a.data.length;
-  const rhsByteOffset = rhsElementOffset * 4;
-  const resultElementOffset = lhsElementOffset + a.data.length + b.data.length;
-  const resultByteOffset = resultElementOffset * 4;
   const elementLength = a.data.length;
+  const lhsElementOffset = 0;
+  const rhsElementOffset = lhsElementOffset + elementLength;
+  const rhsByteOffset = rhsElementOffset * 4;
+  const resultElementOffset = lhsElementOffset + elementLength + b.data.length;
+  const resultByteOffset = resultElementOffset * 4;
 
-  //grow memory if needed
-  // const spaceLeftover = matInstance.exports.memory.buffer.byteLength - (a.data.length * 3 * 8)
-  // if (spaceLeftover < 0){
-  // 	const pagesNeeded = Math.ceil((a.data.length * 3 * 8) / (64 * 1024));
-  // 	const pagesHave = matInstance.exports.memory.buffer.byteLength / (64 * 1024);
-  // 	matInstance.exports.memory.grow(pagesNeeded - pagesHave);
-  // }
+  if (allowMemoryGrowth) {
+    growMemory(elementLength);
+  }
 
   const f32View = new Float32Array(matInstance.exports.memory.buffer);
   f32View.set(a.data, lhsElementOffset);
@@ -306,20 +311,16 @@ export function addMatrixWasmSimdF32(a, b) {
 }
 
 export function addMatrixWasmSimdI32(a, b) {
-  const lhsElementOffset = 0;
-  const rhsElementOffset = lhsElementOffset + a.data.length;
-  const rhsByteOffset = rhsElementOffset * 4;
-  const resultElementOffset = lhsElementOffset + a.data.length + b.data.length;
-  const resultByteOffset = resultElementOffset * 4;
   const elementLength = a.data.length;
+  const lhsElementOffset = 0;
+  const rhsElementOffset = lhsElementOffset + elementLength;
+  const rhsByteOffset = rhsElementOffset * 4;
+  const resultElementOffset = lhsElementOffset + elementLength + b.data.length;
+  const resultByteOffset = resultElementOffset * 4;
 
-  //grow memory if needed
-  // const spaceLeftover = matInstance.exports.memory.buffer.byteLength - (a.data.length * 3 * 8)
-  // if (spaceLeftover < 0){
-  // 	const pagesNeeded = Math.ceil((a.data.length * 3 * 8) / (64 * 1024));
-  // 	const pagesHave = matInstance.exports.memory.buffer.byteLength / (64 * 1024);
-  // 	matInstance.exports.memory.grow(pagesNeeded - pagesHave);
-  // }
+  if (allowMemoryGrowth) {
+    growMemory(elementLength);
+  }
 
   const i32View = new Int32Array(matInstance.exports.memory.buffer);
   i32View.set(a.data, lhsElementOffset);
